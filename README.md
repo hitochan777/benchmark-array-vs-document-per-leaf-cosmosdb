@@ -50,13 +50,8 @@ Devices are stored as an array of IDs within the group document.
 
 ## When to Use Each Approach
 
-| Use Case | Recommended Approach |
-|----------|---------------------|
-| Frequently list devices by group | Array in Group |
-| Frequently lookup individual devices | Document per Device |
-| Devices have additional metadata | Document per Device |
-| Groups have many devices (1000+) | Consider document size limits (2MB max) |
-| Minimize RU consumption for group queries | Array in Group |
+If querying is more frequent than updating device-to-group relationships, it is better to use approach 2.
+If the number of devices in a group can be huge (>100K), it might reach 2MB limit of a document, so you should consider approach 1.
 
 ## Usage
 
