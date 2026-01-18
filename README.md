@@ -25,19 +25,28 @@ Devices are stored as an array of IDs within the group document.
 
 ## Benchmark Results
 
-Tested with **100 groups** and **100 devices per group** (10,000 total devices).
+### Scenario 1: 100 groups × 100 devices (10,000 total)
 
 | Query | Document per Device | Array in Group | Winner |
 |-------|--------------------:|---------------:|--------|
-| Get all devices (5 groups, 500 devices) | 16.57 RUs | **3.43 RUs** | Array in Group |
+| Get all devices (5 groups, 500 devices) | 16.57 RUs | **3.43 RUs** | Array in Group (~5x) |
 | Get group for a device | 2.92 RUs | **2.83 RUs** | Array in Group |
+| Point read device by ID | **1.00 RUs** | N/A | Document per Device |
+
+### Scenario 2: 10 groups × 1,000 devices (10,000 total)
+
+| Query | Document per Device | Array in Group | Winner |
+|-------|--------------------:|---------------:|--------|
+| Get all devices (5 groups, 5000 devices) | 146.94 RUs | **4.31 RUs** | Array in Group (~34x) |
+| Get group for a device | 2.89 RUs | **2.79 RUs** | Array in Group |
 | Point read device by ID | **1.00 RUs** | N/A | Document per Device |
 
 ## Key Insights
 
-- **Array in Group is ~5x more efficient** for fetching all devices across multiple groups
-- Both approaches perform similarly for finding which group a device belongs to
-- **Document per Device enables point reads** (1 RU) for direct device lookups, which is not possible with the array approach
+- **Array in Group scales better** - efficiency gap widens with more devices per group (5x → 34x)
+- **Array in Group reads fewer documents** - fetches N group documents vs N×M device documents
+- Both approaches perform similarly for finding which group a device belongs to (~2.8 RUs)
+- **Document per Device enables point reads** (1 RU) for direct device lookups
 
 ## When to Use Each Approach
 
@@ -46,7 +55,7 @@ Tested with **100 groups** and **100 devices per group** (10,000 total devices).
 | Frequently list devices by group | Array in Group |
 | Frequently lookup individual devices | Document per Device |
 | Devices have additional metadata | Document per Device |
-| Groups have many devices (1000+) | Document per Device (avoid large documents) |
+| Groups have many devices (1000+) | Consider document size limits (2MB max) |
 | Minimize RU consumption for group queries | Array in Group |
 
 ## Usage
@@ -60,6 +69,9 @@ dotnet run -- --seed
 
 # Subsequent runs - use existing data
 dotnet run
+
+# Custom configuration
+dotnet run -- --seed -g 10 --devices-per-group 1000
 
 # Cleanup containers after benchmark
 dotnet run -- --cleanup
